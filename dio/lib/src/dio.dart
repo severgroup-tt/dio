@@ -1139,7 +1139,23 @@ abstract class DioMixin implements Dio {
     } else if (response is! Response) {
       response = Response<T>(data: response, request: requestOptions);
     } else {
-      T data = response.data;
+      T data;
+      final isNoContentStatusCode = response.statusCode == 204;
+
+      if (isNoContentStatusCode) {
+        // Dio's DefaultTransformer returns an empty string when there is no content received.
+        // Assignment of a string to T when T is not of a String type throws an exception.
+        if (T == List) {
+          data = [] as T;
+        } else if (T == Map) {
+          data = Map() as T;
+        }
+      }
+
+      if (data == null) {
+        data = response.data;
+      }
+
       response = Response<T>(
         data: data,
         headers: response.headers,
